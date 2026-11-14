@@ -5,125 +5,116 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>我的漫画阅读器</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background-color: #1a1a1a; color: white; font-family: Arial, sans-serif; transition: background-color 0.3s, color 0.3s; }
-        .container { display: flex; flex-direction: column; align-items: center; padding: 20px; min-height: 100vh; }
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #1a1a24; color: #f0f0f0; }
+        header { padding: 20px; text-align: center; background: #252532; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+        h1 { margin: 0; font-size: 24px; color: #fff; }
+        .container { max-width: 800px; margin: 30px auto; padding: 0 15px; }
         
-        /* 按钮和顶部栏样式 */
-        .nav-buttons { margin: 20px 0; display: flex; align-items: center; gap: 15px; }
-        button { 
-            background-color: #ff6b6b; border: none; padding: 10px 20px; 
-            color: white; border-radius: 5px; cursor: pointer; transition: transform 0.1s;
-        }
-        button:active { transform: scale(0.95); }
+        /* 书架样式 */
+        .book { background: #2d2d3d; border-radius: 10px; overflow: hidden; text-align: center; cursor: pointer; transition: transform 0.2s; display: inline-block; width: 180px; margin: 15px; vertical-align: top; }
+        .book:hover { transform: translateY(-5px); }
+        .book img { width: 100%; height: 250px; object-fit: cover; }
+        .book-info { padding: 12px; }
+        .book-title { margin: 0; font-size: 14px; }
+
+        /* 阅读器样式 (默认隐藏) */
+        #reader { display: none; text-align: center; padding: 20px 0; }
+        .nav-btn { background: #4a90e2; color: white; border: none; padding: 8px 20px; border-radius: 5px; cursor: pointer; font-size: 14px; margin: 0 15px; }
+        .nav-btn:hover { background: #357abd; }
+        #page-indicator { display: inline-block; width: 80px; text-align: center; font-size: 14px; color: #aaa; }
+        .comic-img { max-width: 100%; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); margin-top: 20px; min-height: 200px; display: block; margin-left: auto; margin-right: auto;}
         
-        #theme-toggle {
-            background-color: #4dabf7; /* 白天模式按钮颜色 */
-            font-size: 14px; padding: 8px 12px;
-        }
-        #page-counter {
-            color: #aaa; font-size: 14px; min-width: 50px; text-align: center;
-        }
-
-        /* 图片样式 */
-        .img-container { width: 100%; max-width: 800px; display: flex; justify-content: center; }
-        img { max-width: 100%; border-radius: 8px; transition: opacity 0.3s ease; }
-
-        /* 白天模式样式类 */
-        body.light-mode { background-color: #f5f5f5; color: #333; }
-        body.light-mode .nav-buttons button { background-color: #333; }
-        body.light-mode #theme-toggle { background-color: #333; }
-        body.light-mode #page-counter { color: #666; }
+        .back-btn { display: inline-block; margin-bottom: 20px; color: #aaa; text-decoration: none; cursor: pointer; }
+        .back-btn:hover { color: #fff; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="nav-buttons">
-            <button onclick="prevPage()">上一张</button>
-            <span id="page-counter">1 / 1</span>
-            <button onclick="nextPage()">下一张</button>
-            <button id="theme-toggle" onclick="toggleTheme()">🌙</button>
+
+<header>
+    <h1 id="header-title">我的漫画书架</h1>
+</header>
+
+<div class="container">
+    <!-- 书架区域 -->
+    <div id="bookshelf">
+        <div class="book" onclick="openComic('cover')">
+            <img src="comics/cover.jpg" alt="封面">
+            <div class="book-info">
+                <h3 class="book-title">我的第一部漫画</h3>
+            </div>
         </div>
-        <div class="img-container">
-            <img id="comic-img" src="" alt="漫画加载中..." />
-        </div>
+        <!-- 后续你可以按这个格式添加更多漫画 -->
     </div>
 
-    <script>
-        // 配置你的漫画图片列表
-        const images = ['微信图片_20261113002122_66_2.jpg']; 
-        let currentIndex = 0;
+    <!-- 阅读区域 -->
+    <div id="reader">
+        <div class="back-btn" onclick="goBackToShelf()">← 返回书架</div>
+        <img id="comic-page" class="comic-img" src="" alt="漫画内容">
+        <div style="margin-top: 20px;">
+            <button class="nav-btn" onclick="prevPage()">上一页</button>
+            <span id="page-indicator">1/1</span>
+            <button class="nav-btn" onclick="nextPage()">下一页</button>
+        </div>
+    </div>
+</div>
 
-        // 页面加载时运行
-        window.onload = function() {
-            loadSettings(); // 加载上次的书签和阅读模式
-            updateImage();  // 更新图片
-            updateCounter(); // 更新页码显示
-        };
-
-        // 更新图片显示
-        function updateImage() {
-            document.getElementById('comic-img').src = images[currentIndex];
-            updateCounter();
-            saveSettings(); // 每次翻页自动保存书签
+<script>
+    // 1. 在这里配置你的漫画数据
+    const comics = {
+        'cover': {
+            title: '我的第一部漫画',
+            pages: ['cover.jpg'] // 以后上传新图，在这里加文件名，如 ['cover.jpg', '1.jpg', '2.jpg']
         }
+    };
 
-        // 更新页码
-        function updateCounter() {
-            document.getElementById('page-counter').innerText = `${currentIndex + 1} / ${images.length}`;
+    let currentComic = null;
+    let currentPageIndex = 0;
+
+    // 打开漫画
+    function openComic(id) {
+        const comic = comics[id];
+        if (!comic) return;
+        
+        currentComic = comic;
+        currentPageIndex = 0;
+        
+        document.getElementById('header-title').innerText = comic.title;
+        document.getElementById('bookshelf').style.display = 'none';
+        document.getElementById('reader').style.display = 'block';
+        
+        updatePage();
+    }
+
+    // 更新页面显示
+    function updatePage() {
+        if (!currentComic) return;
+        document.getElementById('comic-page').src = `comics/${currentComic.pages[currentPageIndex]}`;
+        document.getElementById('page-indicator').innerText = `${currentPageIndex + 1}/${currentComic.pages.length}`;
+    }
+
+    // 翻页逻辑
+    function prevPage() {
+        if (currentPageIndex > 0) {
+            currentPageIndex--;
+            updatePage();
         }
+    }
 
-        // 翻页功能
-        function nextPage() {
-            if (currentIndex < images.length - 1) {
-                currentIndex++;
-                updateImage();
-            }
+    function nextPage() {
+        if (currentPageIndex < currentComic.pages.length - 1) {
+            currentPageIndex++;
+            updatePage();
         }
+    }
 
-        function prevPage() {
-            if (currentIndex > 0) {
-                currentIndex--;
-                updateImage();
-            }
-        }
+    // 返回书架
+    function goBackToShelf() {
+        document.getElementById('header-title').innerText = '我的漫画书架';
+        document.getElementById('bookshelf').style.display = 'block';
+        document.getElementById('reader').style.display = 'none';
+        currentComic = null;
+    }
+</script>
 
-        // 键盘快捷键翻页
-        document.addEventListener('keydown', function(event) {
-            if (event.key === "ArrowRight") {
-                nextPage();
-            } else if (event.key === "ArrowLeft") {
-                prevPage();
-            }
-        });
-
-        // 切换白天/夜间模式
-        function toggleTheme() {
-            document.body.classList.toggle('light-mode');
-            const btn = document.getElementById('theme-toggle');
-            btn.innerText = document.body.classList.contains('light-mode') ? '☀️' : '🌙';
-            saveSettings(); // 保存当前模式
-        }
-
-        // 保存设置（书签和阅读模式）
-        function saveSettings() {
-            localStorage.setItem('comic-index', currentIndex);
-            localStorage.setItem('is-light-mode', document.body.classList.contains('light-mode'));
-        }
-
-        // 读取设置（书签和阅读模式）
-        function loadSettings() {
-            const savedIndex = localStorage.getItem('comic-index');
-            if (savedIndex !== null) {
-                currentIndex = parseInt(savedIndex);
-            }
-
-            const isLightMode = localStorage.getItem('is-light-mode');
-            if (isLightMode === 'true') {
-                document.body.classList.add('light-mode');
-                document.getElementById('theme-toggle').innerText = '☀️';
-            }
-        }
-    </script>
 </body>
 </html>
