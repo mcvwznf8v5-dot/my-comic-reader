@@ -1,74 +1,50 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5">
-<title>本地漫画阅读器</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{background:#111;color:#fff;text-align:center;padding-bottom:70px;overflow-x:hidden}
-.light{background:#fff;color:#222}
-#imgBox{min-height:88vh;padding:8px}
-#comicImg{max-width:98%;max-height:88vh;object-fit:contain;touch-action:pan-y}
-.ctrl{position:fixed;bottom:0;left:0;width:100%;background:#222;padding:10px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
-button{padding:8px 14px;font-size:16px;cursor:pointer}
-#fileInput{display:none}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的漫画阅读器</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background-color: #1a1a1a; color: white; font-family: Arial, sans-serif; }
+        .container { display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .nav-buttons { margin: 20px 0; }
+        button { background-color: #ff6b6b; border: none; padding: 10px 20px; color: white; border-radius: 5px; margin: 0 10px; cursor: pointer; }
+        img { max-width: 100%; border-radius: 8px; }
+    </style>
 </head>
 <body>
-<div id="imgBox">
-  <img id="comicImg" src="" alt="点击按钮选择漫画文件夹">
-</div>
-<div class="ctrl">
-  <button onclick="document.getElementById('fileInput').click()">打开漫画文件夹</button>
-  <button onclick="prevPage()">←上一页</button>
-  <button onclick="nextPage()">下一页→</button>
-  <button onclick="toggleTheme()">明暗切换</button>
-  <span id="pageInfo">0 / 0</span>
-</div>
-<input type="file" id="fileInput" multiple accept="image/*" webkitdirectory>
-<script>
-let imgList = [];
-let now = 0;
-const img = document.getElementById('comicImg');
-const info = document.getElementById('pageInfo');
-const fileInput = document.getElementById('fileInput');
+    <div class="container">
+        <div class="nav-buttons">
+            <button onclick="prevPage()">上一张</button>
+            <button onclick="nextPage()">下一张</button>
+        </div>
+        <img id="comic-img" src="" alt="漫画" />
+    </div>
 
-fileInput.onchange = (e)=>{
-  imgList = Array.from(e.target.files).filter(f=>f.type.startsWith('image/'));
-  imgList.sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true,sensitivity:'base'}));
-  now = 0;
-  showPage();
-}
-function showPage(){
-  if(imgList.length===0) return;
-  const url = URL.createObjectURL(imgList[now]);
-  img.src = url;
-  info.innerText = `${now+1} / ${imgList.length}`;
-}
-function nextPage(){
-  if(now < imgList.length-1){ now++; showPage(); }
-}
-function prevPage(){
-  if(now > 0){ now--; showPage(); }
-}
-function toggleTheme(){
-  document.body.classList.toggle('light');
-}
-// 触屏左右滑动翻页
-let startX = 0;
-document.addEventListener('touchstart',e=>startX=e.touches[0].clientX);
-document.addEventListener('touchend',e=>{
-  const endX = e.changedTouches[0].clientX;
-  const diff = endX - startX;
-  if(diff>80) prevPage();
-  if(diff<-80) nextPage();
-})
-// 键盘
-document.onkeydown = e=>{
-  if(e.key==='ArrowRight') nextPage();
-  if(e.key==='ArrowLeft') prevPage();
-}
-</script>
+    <script>
+        const images = ['微信图片_20261113002122_66_2.jpg']; // 漫画图片列表
+        let currentIndex = 0;
+
+        function updateImage() {
+            document.getElementById('comic-img').src = images[currentIndex];
+        }
+
+        function nextPage() {
+            if (currentIndex < images.length - 1) {
+                currentIndex++;
+                updateImage();
+            }
+        }
+
+        function prevPage() {
+            if (currentIndex > 0) {
+                currentIndex--;
+                updateImage();
+            }
+        }
+
+        updateImage();
+    </script>
 </body>
 </html>
