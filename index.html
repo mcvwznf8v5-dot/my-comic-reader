@@ -9,21 +9,29 @@
         header { padding: 20px; text-align: center; background: #252532; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
         h1 { margin: 0; font-size: 24px; color: #fff; }
         .container { max-width: 800px; margin: 30px auto; padding: 0 15px; }
-        
-        /* 书架样式 */
+
+        /* 书架 */
         .book { background: #2d2d3d; border-radius: 10px; overflow: hidden; text-align: center; cursor: pointer; transition: transform 0.2s; display: inline-block; width: 180px; margin: 15px; vertical-align: top; }
         .book:hover { transform: translateY(-5px); }
         .book img { width: 100%; height: 250px; object-fit: cover; }
         .book-info { padding: 12px; }
         .book-title { margin: 0; font-size: 14px; }
 
-        /* 阅读器样式 (默认隐藏) */
+        /* 章节列表 */
+        .chapter-list { display: none; }
+        .chapter-item { background: #2d2d3d; border-radius: 8px; padding: 15px; margin: 10px 0; cursor: pointer; display: flex; align-items: center; transition: background 0.2s; }
+        .chapter-item:hover { background: #3a3a4d; }
+        .chapter-thumb { width: 60px; height: 80px; object-fit: cover; border-radius: 5px; margin-right: 15px; }
+        .chapter-info h3 { margin: 0 0 5px 0; font-size: 16px; }
+        .chapter-info p { margin: 0; font-size: 12px; color: #aaa; }
+
+        /* 阅读器 */
         #reader { display: none; text-align: center; padding: 20px 0; }
-        .nav-btn { background: #4a90e2; color: white; border: none; padding: 8px 20px; border-radius: 5px; cursor: pointer; font-size: 14px; margin: 0 15px; }
+        .nav-btn { background: #4a90e2; color: white; border: none; padding: 8px 20px; border-radius: 5px; cursor: pointer; font-size: 14px; margin: 0 10px; }
         .nav-btn:hover { background: #357abd; }
         #page-indicator { display: inline-block; width: 80px; text-align: center; font-size: 14px; color: #aaa; }
         .comic-img { max-width: 100%; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); margin-top: 20px; min-height: 200px; display: block; margin-left: auto; margin-right: auto;}
-        
+
         .back-btn { display: inline-block; margin-bottom: 20px; color: #aaa; text-decoration: none; cursor: pointer; }
         .back-btn:hover { color: #fff; }
     </style>
@@ -35,20 +43,25 @@
 </header>
 
 <div class="container">
-    <!-- 书架区域 -->
+    <!-- 书架 -->
     <div id="bookshelf">
-        <div class="book" onclick="openComic('cover')">
+        <div class="book" onclick="openComic('myComic')">
             <img src="comics/cover.jpg" alt="封面">
             <div class="book-info">
                 <h3 class="book-title">我的第一部漫画</h3>
             </div>
         </div>
-        <!-- 后续你可以按这个格式添加更多漫画 -->
     </div>
 
-    <!-- 阅读区域 -->
-    <div id="reader">
+    <!-- 章节列表 -->
+    <div id="chapter-list" class="chapter-list">
         <div class="back-btn" onclick="goBackToShelf()">← 返回书架</div>
+        <div id="chapters"></div>
+    </div>
+
+    <!-- 阅读器 -->
+    <div id="reader">
+        <div class="back-btn" onclick="goBackToChapters()">← 返回目录</div>
         <img id="comic-page" class="comic-img" src="" alt="漫画内容">
         <div style="margin-top: 20px;">
             <button class="nav-btn" onclick="prevPage()">上一页</button>
@@ -59,59 +72,84 @@
 </div>
 
 <script>
-    // 1. 在这里配置你的漫画数据
+    // 在这里配置你的漫画和章节
     const comics = {
-        'cover': {
+        'myComic': {
             title: '我的第一部漫画',
-            pages: ['cover.jpg'] // 以后上传新图，在这里加文件名，如 ['cover.jpg', '1.jpg', '2.jpg']
+            chapters: [
+                { id: 'ch1', title: '第1话：开始', cover: 'ch1.jpg', pages: ['ch1.jpg'] },
+                { id: 'ch2', title: '第2话：冒险', cover: 'ch2.jpg', pages: ['ch2.jpg'] }
+                // 以后加新章节，就在这里继续添加
+            ]
         }
     };
 
     let currentComic = null;
+    let currentChapter = null;
     let currentPageIndex = 0;
 
-    // 打开漫画
+    // 打开漫画，显示章节列表
     function openComic(id) {
         const comic = comics[id];
         if (!comic) return;
-        
         currentComic = comic;
-        currentPageIndex = 0;
-        
-        document.getElementById('header-title').innerText = comic.title;
+
+        document.getElementById('header-title').innerText = comic.title + ' - 目录';
         document.getElementById('bookshelf').style.display = 'none';
+        document.getElementById('reader').style.display = 'none';
+        document.getElementById('chapter-list').style.display = 'block';
+
+        let html = '';
+        comic.chapters.forEach((ch, index) => {
+            html += `
+                <div class="chapter-item" onclick="openChapter(${index})">
+                    <img class="chapter-thumb" src="comics/${ch.cover}" alt="${ch.title}">
+                    <div class="chapter-info">
+                        <h3>${ch.title}</h3>
+                        <p>共 ${ch.pages.length} 页</p>
+                    </div>
+                </div>`;
+        });
+        document.getElementById('chapters').innerHTML = html;
+    }
+
+    // 打开某一章
+    function openChapter(index) {
+        currentChapter = currentComic.chapters[index];
+        currentPageIndex = 0;
+
+        document.getElementById('header-title').innerText = currentChapter.title;
+        document.getElementById('chapter-list').style.display = 'none';
         document.getElementById('reader').style.display = 'block';
-        
+
         updatePage();
     }
 
-    // 更新页面显示
+    // 更新页面
     function updatePage() {
-        if (!currentComic) return;
-        document.getElementById('comic-page').src = `comics/${currentComic.pages[currentPageIndex]}`;
-        document.getElementById('page-indicator').innerText = `${currentPageIndex + 1}/${currentComic.pages.length}`;
+        if (!currentChapter) return;
+        document.getElementById('comic-page').src = `comics/${currentChapter.pages[currentPageIndex]}`;
+        document.getElementById('page-indicator').innerText = `${currentPageIndex + 1}/${currentChapter.pages.length}`;
     }
 
-    // 翻页逻辑
     function prevPage() {
-        if (currentPageIndex > 0) {
-            currentPageIndex--;
-            updatePage();
-        }
+        if (currentPageIndex > 0) { currentPageIndex--; updatePage(); }
     }
-
     function nextPage() {
-        if (currentPageIndex < currentComic.pages.length - 1) {
-            currentPageIndex++;
-            updatePage();
-        }
+        if (currentPageIndex < currentChapter.pages.length - 1) { currentPageIndex++; updatePage(); }
     }
 
-    // 返回书架
+    function goBackToChapters() {
+        document.getElementById('header-title').innerText = currentComic.title + ' - 目录';
+        document.getElementById('reader').style.display = 'none';
+        document.getElementById('chapter-list').style.display = 'block';
+        currentChapter = null;
+    }
+
     function goBackToShelf() {
         document.getElementById('header-title').innerText = '我的漫画书架';
+        document.getElementById('chapter-list').style.display = 'none';
         document.getElementById('bookshelf').style.display = 'block';
-        document.getElementById('reader').style.display = 'none';
         currentComic = null;
     }
 </script>
