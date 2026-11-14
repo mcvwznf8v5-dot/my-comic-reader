@@ -4,15 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>我的漫画阅读器</title>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="漫画阅读器">
+    <link rel="apple-touch-icon" href="/icons/icon-192.png">
+    <meta name="theme-color" content="#252532">
     <style>
         body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #1a1a24; color: #f0f0f0; transition: background 0.3s, color 0.3s; }
-        header { padding: 20px; text-align: center; background: #252532; box-shadow: 0 2px 10px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; position: relative; }
-        h1 { margin: 0; font-size: 24px; color: #fff; }
-        .container { max-width: 800px; margin: 30px auto; padding: 0 15px; }
+        header { padding: 15px 20px; background: #252532; box-shadow: 0 2px 10px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; position: relative; }
+        h1 { margin: 0; font-size: 20px; color: #fff; }
+        .container { max-width: 800px; margin: 20px auto; padding: 0 15px; }
 
-        .theme-toggle {
+        .theme-toggle, .import-btn {
             position: absolute;
-            right: 20px;
             background: #3a3a4d;
             border: none;
             color: #f0f0f0;
@@ -22,53 +26,54 @@
             font-size: 14px;
             transition: background 0.3s;
         }
-        .theme-toggle:hover { background: #4a4a60; }
+        .theme-toggle { right: 20px; }
+        .import-btn { right: 110px; }
+        .theme-toggle:hover, .import-btn:hover { background: #4a4a60; }
 
-        .book { background: #2d2d3d; border-radius: 10px; overflow: hidden; text-align: center; cursor: pointer; transition: transform 0.2s; display: inline-block; width: 180px; margin: 15px; vertical-align: top; }
+        #import-input { display: none; }
+
+        .book { background: #2d2d3d; border-radius: 10px; overflow: hidden; text-align: center; cursor: pointer; transition: transform 0.2s; display: inline-block; width: 150px; margin: 10px; vertical-align: top; }
         .book:hover { transform: translateY(-5px); }
-        .book img { width: 100%; height: 250px; object-fit: cover; }
-        .book-info { padding: 12px; }
-        .book-title { margin: 0; font-size: 14px; }
+        .book img { width: 100%; height: 210px; object-fit: cover; }
+        .book-info { padding: 10px; }
+        .book-title { margin: 0; font-size: 13px; }
+        .book-delete { color: #e74c3c; font-size: 12px; margin-top: 4px; cursor: pointer; }
 
-        .chapter-list { display: none; }
-        .chapter-item { background: #2d2d3d; border-radius: 8px; padding: 15px; margin: 10px 0; cursor: pointer; display: flex; align-items: center; transition: background 0.2s; }
+        .chapter-list, #reader { display: none; }
+        .chapter-item { background: #2d2d3d; border-radius: 8px; padding: 12px; margin: 8px 0; cursor: pointer; display: flex; align-items: center; transition: background 0.2s; }
         .chapter-item:hover { background: #3a3a4d; }
-        .chapter-thumb { width: 60px; height: 80px; object-fit: cover; border-radius: 5px; margin-right: 15px; }
-        .chapter-info h3 { margin: 0 0 5px 0; font-size: 16px; }
+        .chapter-thumb { width: 50px; height: 70px; object-fit: cover; border-radius: 5px; margin-right: 12px; flex-shrink: 0; }
+        .chapter-info h3 { margin: 0 0 4px 0; font-size: 15px; }
         .chapter-info p { margin: 0; font-size: 12px; color: #aaa; }
 
-        #reader { display: none; text-align: center; padding: 20px 0; }
-        .nav-btn { background: #4a90e2; color: white; border: none; padding: 8px 20px; border-radius: 5px; cursor: pointer; font-size: 14px; margin: 0 10px; }
+        #reader { text-align: center; padding: 10px 0; }
+        .nav-btn { background: #4a90e2; color: white; border: none; padding: 8px 18px; border-radius: 5px; cursor: pointer; font-size: 14px; margin: 0 8px; }
         .nav-btn:hover { background: #357abd; }
-        #page-indicator { display: inline-block; width: 80px; text-align: center; font-size: 14px; color: #aaa; }
+        #page-indicator { display: inline-block; width: 70px; text-align: center; font-size: 14px; color: #aaa; }
 
         .comic-img {
             max-width: 100%;
             border-radius: 8px;
             box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-            margin-top: 20px;
+            margin-top: 15px;
             min-height: 200px;
             display: block;
             margin-left: auto;
             margin-right: auto;
-            transition: opacity 0.3s ease, transform 0.3s ease;
         }
-        .comic-img.slide-out-left  { opacity: 0; transform: translateX(-60px); }
-        .comic-img.slide-out-right { opacity: 0; transform: translateX(60px); }
-        .comic-img.slide-in        { opacity: 0; transform: translateX(40px); }
 
-        .back-btn { display: inline-block; margin-bottom: 20px; color: #aaa; text-decoration: none; cursor: pointer; }
+        .back-btn { display: inline-block; margin-bottom: 15px; color: #aaa; text-decoration: none; cursor: pointer; }
         .back-btn:hover { color: #fff; }
 
-        /* 日间模式 */
+        .empty-tip { text-align: center; color: #888; margin-top: 60px; font-size: 15px; }
+
         body.light { background: #f5f5f5; color: #333; }
         body.light header { background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         body.light h1 { color: #333; }
         body.light .book { background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
         body.light .chapter-item { background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
         body.light .chapter-item:hover { background: #f0f0f0; }
-        body.light .theme-toggle { background: #e0e0e0; color: #333; }
-        body.light .theme-toggle:hover { background: #d0d0d0; }
+        body.light .theme-toggle, body.light .import-btn { background: #e0e0e0; color: #333; }
         body.light .back-btn { color: #888; }
         body.light .back-btn:hover { color: #333; }
     </style>
@@ -77,28 +82,22 @@
 
 <header>
     <h1 id="header-title">我的漫画书架</h1>
+    <button class="import-btn" onclick="document.getElementById('import-input').click()">📂 导入</button>
     <button class="theme-toggle" onclick="toggleTheme()">🌙 夜间</button>
 </header>
 
-<div class="container">
-    <div id="bookshelf">
-        <div class="book" onclick="openComic('myComic')">
-            <img src="comics/cover.jpg" alt="封面">
-            <div class="book-info">
-                <h3 class="book-title">我的第一部漫画</h3>
-            </div>
-        </div>
-    </div>
+<input type="file" id="import-input" accept="image/*" multiple onchange="handleImport(event)">
 
+<div class="container">
+    <div id="bookshelf"></div>
     <div id="chapter-list" class="chapter-list">
         <div class="back-btn" onclick="goBackToShelf()">← 返回书架</div>
         <div id="chapters"></div>
     </div>
-
     <div id="reader">
         <div class="back-btn" onclick="goBackToChapters()">← 返回目录</div>
         <img id="comic-page" class="comic-img" src="" alt="漫画内容">
-        <div style="margin-top: 20px;">
+        <div style="margin-top: 15px;">
             <button class="nav-btn" onclick="prevPage()">上一页</button>
             <span id="page-indicator">1/1</span>
             <button class="nav-btn" onclick="nextPage()">下一页</button>
@@ -107,156 +106,191 @@
 </div>
 
 <script>
-    const comics = {
-        'myComic': {
-            title: '我的第一部漫画',
-            chapters: [
-                { id: 'ch1', title: '第1话：开始', cover: 'ch1.jpg', pages: ['ch1.jpg'] },
-                { id: 'ch2', title: '第2话：冒险', cover: 'ch2.jpg', pages: ['ch2.jpg'] }
-            ]
-        }
-    };
+const DB_NAME = 'MangaReaderDB';
+const DB_VER = 1;
+const STORE = 'manga';
+let db = null;
+let currentComic = null;
+let currentChapter = null;
+let currentPageIndex = 0;
+let touchStartX = 0, touchEndX = 0;
 
-    let currentComic = null;
-    let currentChapter = null;
-    let currentPageIndex = 0;
-    let isAnimating = false;
-    let touchStartX = 0;
-    let touchEndX = 0;
+// 主题
+const savedTheme = localStorage.getItem('comicTheme');
+if (savedTheme === 'light') {
+    document.body.classList.add('light');
+    document.querySelector('.theme-toggle').innerText = '☀️ 日间';
+}
+function toggleTheme() {
+    const btn = document.querySelector('.theme-toggle');
+    document.body.classList.toggle('light');
+    const isLight = document.body.classList.contains('light');
+    btn.innerText = isLight ? '☀️ 日间' : '🌙 夜间';
+    localStorage.setItem('comicTheme', isLight ? 'light' : 'dark');
+}
 
-    // 读取保存的主题
-    const savedTheme = localStorage.getItem('comicTheme');
-    if (savedTheme === 'light') {
-        document.body.classList.add('light');
-        document.querySelector('.theme-toggle').innerText = '☀️ 日间';
-    }
-
-    function toggleTheme() {
-        const btn = document.querySelector('.theme-toggle');
-        document.body.classList.toggle('light');
-        const isLight = document.body.classList.contains('light');
-        btn.innerText = isLight ? '☀️ 日间' : '🌙 夜间';
-        localStorage.setItem('comicTheme', isLight ? 'light' : 'dark');
-    }
-
-    // 读取保存的阅读进度
-    const savedProgress = localStorage.getItem('comicProgress');
-    if (savedProgress) {
-        try {
-            const p = JSON.parse(savedProgress);
-            // 下次打开时自动跳转到上次的位置
-            setTimeout(() => {
-                if (comics[p.comicId] && comics[p.comicId].chapters[p.chapterIndex]) {
-                    openComic(p.comicId);
-                    openChapter(p.chapterIndex, p.pageIndex);
-                }
-            }, 100);
-        } catch(e) {}
-    }
-
-    function saveProgress() {
-        if (!currentComic || !currentChapter) return;
-        const progress = {
-            comicId: 'myComic',
-            chapterIndex: currentComic.chapters.indexOf(currentChapter),
-            pageIndex: currentPageIndex
+// IndexedDB
+function openDB() {
+    return new Promise((resolve, reject) => {
+        const req = indexedDB.open(DB_NAME, DB_VER);
+        req.onupgradeneeded = e => {
+            const d = e.target.result;
+            if (!d.objectStoreNames.contains(STORE)) d.createObjectStore(STORE, { keyPath: 'id' });
         };
-        localStorage.setItem('comicProgress', JSON.stringify(progress));
+        req.onsuccess = e => { db = e.target.result; resolve(db); };
+        req.onerror = e => reject(e.target.error);
+    });
+}
+
+function dbOp(mode, fn) {
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE, mode);
+        const store = tx.objectStore(STORE);
+        const req = fn(store);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+    });
+}
+
+function saveComic(data) { return dbOp('readwrite', s => s.put(data)); }
+function getComic(id) { return dbOp('readonly', s => s.get(id)); }
+function getAllComics() { return dbOp('readonly', s => s.getAll()); }
+function deleteComic(id) { return dbOp('readwrite', s => s.delete(id)); }
+
+// 导入
+async function handleImport(e) {
+    const files = [...e.target.files].filter(f => f.type.startsWith('image/'));
+    if (!files.length) return;
+    files.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+
+    const name = prompt('给这部漫画起个名字：', '我的漫画 ' + new Date().toLocaleDateString());
+    if (!name) return;
+
+    const id = 'manga_' + Date.now();
+    const pages = [];
+    let coverData = '';
+
+    for (let i = 0; i < files.length; i++) {
+        const dataUrl = await readFile(files[i]);
+        pages.push(dataUrl);
+        if (i === 0) coverData = dataUrl;
     }
 
-    function openComic(id) {
-        const comic = comics[id];
-        if (!comic) return;
-        currentComic = comic;
-        document.getElementById('header-title').innerText = comic.title + ' - 目录';
-        document.getElementById('bookshelf').style.display = 'none';
-        document.getElementById('reader').style.display = 'none';
-        document.getElementById('chapter-list').style.display = 'block';
+    await saveComic({
+        id, name,
+        chapters: [{ id: 'ch1', title: '第1话', cover: coverData, pages }]
+    });
 
-        let html = '';
-        comic.chapters.forEach((ch, index) => {
-            html += `
-                <div class="chapter-item" onclick="openChapter(${index})">
-                    <img class="chapter-thumb" src="comics/${ch.cover}" alt="${ch.title}">
-                    <div class="chapter-info">
-                        <h3>${ch.title}</h3>
-                        <p>共 ${ch.pages.length} 页</p>
-                    </div>
-                </div>`;
-        });
-        document.getElementById('chapters').innerHTML = html;
+    e.target.value = '';
+    renderShelf();
+}
+
+function readFile(file) {
+    return new Promise(resolve => {
+        const r = new FileReader();
+        r.onload = e => resolve(e.target.result);
+        r.readAsDataURL(file);
+    });
+}
+
+// 书架
+async function renderShelf() {
+    document.getElementById('header-title').innerText = '我的漫画书架';
+    document.getElementById('chapter-list').style.display = 'none';
+    document.getElementById('reader').style.display = 'none';
+    document.getElementById('bookshelf').style.display = 'block';
+
+    const comics = await getAllComics();
+    const el = document.getElementById('bookshelf');
+
+    if (!comics.length) {
+        el.innerHTML = '<div class="empty-tip">还没有漫画，点右上角 📂 导入图片</div>';
+        return;
     }
 
-    function openChapter(index, restorePage) {
-        currentChapter = currentComic.chapters[index];
-        currentPageIndex = restorePage !== undefined ? restorePage : 0;
-        document.getElementById('header-title').innerText = currentChapter.title;
-        document.getElementById('chapter-list').style.display = 'none';
-        document.getElementById('reader').style.display = 'block';
-        updatePage();
-    }
+    el.innerHTML = comics.map(c => `
+        <div class="book" onclick="openComic('${c.id}')">
+            <img src="${c.chapters[0].cover}" alt="${c.name}">
+            <div class="book-info">
+                <h3 class="book-title">${c.name}</h3>
+                <div class="book-delete" onclick="event.stopPropagation();delComic('${c.id}','${c.name}')">删除</div>
+            </div>
+        </div>
+    `).join('');
+}
 
-    function updatePage() {
-        if (!currentChapter) return;
-        const img = document.getElementById('comic-page');
-        img.src = `comics/${currentChapter.pages[currentPageIndex]}`;
-        document.getElementById('page-indicator').innerText = `${currentPageIndex + 1}/${currentChapter.pages.length}`;
-        saveProgress();
-    }
+async function delComic(id, name) {
+    if (!confirm(`确定删除「${name}」？`)) return;
+    await deleteComic(id);
+    renderShelf();
+}
 
-    function animateFlip(direction, callback) {
-        if (isAnimating) return;
-        isAnimating = true;
-        const img = document.getElementById('comic-page');
-        const outClass = direction === 'next' ? 'slide-out-left' : 'slide-out-right';
-        img.classList.add(outClass);
-        setTimeout(() => {
-            callback();
-            img.classList.remove(outClass);
-            img.classList.add('slide-in');
-            requestAnimationFrame(() => {
-                img.classList.remove('slide-in');
-                setTimeout(() => { isAnimating = false; }, 300);
-            });
-        }, 300);
-    }
+// 目录
+async function openComic(id) {
+    const comic = await getComic(id);
+    if (!comic) return;
+    currentComic = comic;
+    document.getElementById('header-title').innerText = comic.name + ' - 目录';
+    document.getElementById('bookshelf').style.display = 'none';
+    document.getElementById('reader').style.display = 'none';
+    document.getElementById('chapter-list').style.display = 'block';
 
-    function prevPage() {
-        if (currentPageIndex > 0) {
-            animateFlip('prev', () => { currentPageIndex--; updatePage(); });
-        }
-    }
+    document.getElementById('chapters').innerHTML = comic.chapters.map((ch, i) => `
+        <div class="chapter-item" onclick="openChapter(${i})">
+            <img class="chapter-thumb" src="${ch.cover}">
+            <div class="chapter-info">
+                <h3>${ch.title}</h3>
+                <p>共 ${ch.pages.length} 页</p>
+            </div>
+        </div>
+    `).join('');
+}
 
-    function nextPage() {
-        if (currentPageIndex < currentChapter.pages.length - 1) {
-            animateFlip('next', () => { currentPageIndex++; updatePage(); });
-        }
-    }
+function openChapter(index) {
+    currentChapter = currentComic.chapters[index];
+    currentPageIndex = 0;
+    document.getElementById('header-title').innerText = currentChapter.title;
+    document.getElementById('chapter-list').style.display = 'none';
+    document.getElementById('reader').style.display = 'block';
+    updatePage();
+}
 
-    function goBackToChapters() {
-        document.getElementById('header-title').innerText = currentComic.title + ' - 目录';
-        document.getElementById('reader').style.display = 'none';
-        document.getElementById('chapter-list').style.display = 'block';
-        currentChapter = null;
-    }
+function updatePage() {
+    if (!currentChapter) return;
+    document.getElementById('comic-page').src = currentChapter.pages[currentPageIndex];
+    document.getElementById('page-indicator').innerText = `${currentPageIndex + 1}/${currentChapter.pages.length}`;
+}
 
-    function goBackToShelf() {
-        document.getElementById('header-title').innerText = '我的漫画书架';
-        document.getElementById('chapter-list').style.display = 'none';
-        document.getElementById('bookshelf').style.display = 'block';
-        currentComic = null;
-    }
+function prevPage() { if (currentPageIndex > 0) { currentPageIndex--; updatePage(); } }
+function nextPage() { if (currentPageIndex < currentChapter.pages.length - 1) { currentPageIndex++; updatePage(); } }
 
-    const reader = document.getElementById('reader');
-    reader.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, { passive: true });
-    reader.addEventListener('touchend', e => {
-        touchEndX = e.changedTouches[0].screenX;
-        const diff = touchStartX - touchEndX;
-        if (Math.abs(diff) > 50) {
-            diff > 0 ? nextPage() : prevPage();
-        }
-    }, { passive: true });
+function goBackToChapters() {
+    document.getElementById('header-title').innerText = currentComic.name + ' - 目录';
+    document.getElementById('reader').style.display = 'none';
+    document.getElementById('chapter-list').style.display = 'block';
+    currentChapter = null;
+}
+
+function goBackToShelf() {
+    document.getElementById('header-title').innerText = '我的漫画书架';
+    document.getElementById('chapter-list').style.display = 'none';
+    document.getElementById('bookshelf').style.display = 'block';
+    currentComic = null;
+}
+
+// 滑动翻页
+const reader = document.getElementById('reader');
+reader.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, { passive: true });
+reader.addEventListener('touchend', e => {
+    touchEndX = e.changedTouches[0].screenX;
+    const diff = touchStartX - touchEndX;
+    if (Math.abs(diff) > 50) diff > 0 ? nextPage() : prevPage();
+}, { passive: true });
+
+// 启动
+openDB().then(renderShelf).catch(() => {
+    document.getElementById('bookshelf').innerHTML = '<div class="empty-tip">浏览器不支持本地存储，请换 Chrome 试试</div>';
+});
 </script>
-
 </body>
 </html>
