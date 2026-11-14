@@ -6,30 +6,74 @@
     <title>我的漫画阅读器</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background-color: #1a1a1a; color: white; font-family: Arial, sans-serif; }
-        .container { display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        .nav-buttons { margin: 20px 0; }
-        button { background-color: #ff6b6b; border: none; padding: 10px 20px; color: white; border-radius: 5px; margin: 0 10px; cursor: pointer; }
-        img { max-width: 100%; border-radius: 8px; }
+        body { background-color: #1a1a1a; color: white; font-family: Arial, sans-serif; transition: background-color 0.3s, color 0.3s; }
+        .container { display: flex; flex-direction: column; align-items: center; padding: 20px; min-height: 100vh; }
+        
+        /* 按钮和顶部栏样式 */
+        .nav-buttons { margin: 20px 0; display: flex; align-items: center; gap: 15px; }
+        button { 
+            background-color: #ff6b6b; border: none; padding: 10px 20px; 
+            color: white; border-radius: 5px; cursor: pointer; transition: transform 0.1s;
+        }
+        button:active { transform: scale(0.95); }
+        
+        #theme-toggle {
+            background-color: #4dabf7; /* 白天模式按钮颜色 */
+            font-size: 14px; padding: 8px 12px;
+        }
+        #page-counter {
+            color: #aaa; font-size: 14px; min-width: 50px; text-align: center;
+        }
+
+        /* 图片样式 */
+        .img-container { width: 100%; max-width: 800px; display: flex; justify-content: center; }
+        img { max-width: 100%; border-radius: 8px; transition: opacity 0.3s ease; }
+
+        /* 白天模式样式类 */
+        body.light-mode { background-color: #f5f5f5; color: #333; }
+        body.light-mode .nav-buttons button { background-color: #333; }
+        body.light-mode #theme-toggle { background-color: #333; }
+        body.light-mode #page-counter { color: #666; }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="nav-buttons">
             <button onclick="prevPage()">上一张</button>
+            <span id="page-counter">1 / 1</span>
             <button onclick="nextPage()">下一张</button>
+            <button id="theme-toggle" onclick="toggleTheme()">🌙</button>
         </div>
-        <img id="comic-img" src="" alt="漫画" />
+        <div class="img-container">
+            <img id="comic-img" src="" alt="漫画加载中..." />
+        </div>
     </div>
 
     <script>
-        const images = ['微信图片_20261113002122_66_2.jpg']; // 漫画图片列表
+        // 配置你的漫画图片列表
+        const images = ['微信图片_20261113002122_66_2.jpg']; 
         let currentIndex = 0;
 
+        // 页面加载时运行
+        window.onload = function() {
+            loadSettings(); // 加载上次的书签和阅读模式
+            updateImage();  // 更新图片
+            updateCounter(); // 更新页码显示
+        };
+
+        // 更新图片显示
         function updateImage() {
             document.getElementById('comic-img').src = images[currentIndex];
+            updateCounter();
+            saveSettings(); // 每次翻页自动保存书签
         }
 
+        // 更新页码
+        function updateCounter() {
+            document.getElementById('page-counter').innerText = `${currentIndex + 1} / ${images.length}`;
+        }
+
+        // 翻页功能
         function nextPage() {
             if (currentIndex < images.length - 1) {
                 currentIndex++;
@@ -44,7 +88,42 @@
             }
         }
 
-        updateImage();
+        // 键盘快捷键翻页
+        document.addEventListener('keydown', function(event) {
+            if (event.key === "ArrowRight") {
+                nextPage();
+            } else if (event.key === "ArrowLeft") {
+                prevPage();
+            }
+        });
+
+        // 切换白天/夜间模式
+        function toggleTheme() {
+            document.body.classList.toggle('light-mode');
+            const btn = document.getElementById('theme-toggle');
+            btn.innerText = document.body.classList.contains('light-mode') ? '☀️' : '🌙';
+            saveSettings(); // 保存当前模式
+        }
+
+        // 保存设置（书签和阅读模式）
+        function saveSettings() {
+            localStorage.setItem('comic-index', currentIndex);
+            localStorage.setItem('is-light-mode', document.body.classList.contains('light-mode'));
+        }
+
+        // 读取设置（书签和阅读模式）
+        function loadSettings() {
+            const savedIndex = localStorage.getItem('comic-index');
+            if (savedIndex !== null) {
+                currentIndex = parseInt(savedIndex);
+            }
+
+            const isLightMode = localStorage.getItem('is-light-mode');
+            if (isLightMode === 'true') {
+                document.body.classList.add('light-mode');
+                document.getElementById('theme-toggle').innerText = '☀️';
+            }
+        }
     </script>
 </body>
 </html>
